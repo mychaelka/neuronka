@@ -1,0 +1,3 @@
+## Notes from working on the project  
+    - Vanishing gradients are a problem of activation functions, not the neural net itself  
+        - During each iteration of training, each of the weights receives an update that is proportional to the partial derivative of the error function with respect to the current weight. As the network depth increases, the gradient magnitude decreases (or explodes), which slows the learning process.
