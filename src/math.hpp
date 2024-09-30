@@ -2,12 +2,27 @@
 #include <iostream>
 #include <cmath>
 
-// Linear algebra
+/*
+    Linear algebra
+*/ 
 
-// Define Vector as a new class -- will be easier to implement methods
+class Vector {
+public:
+    size_t length;
+    std::vector<float> elements;
+
+    Vector(size_t length) : elements(length) {}  // initialize zero vector
+    Vector(const std::vector<float>& vec) : elements(vec) {}  // initialize with a given vector, copy constructor for std::vector
+};
 
 
-// Activation functions
+class Matrix {
+
+};
+
+/*
+    Activation functions
+*/
 float sigmoid(float x) {
     return 1.0f / (1.0f + std::exp(-x));
 }

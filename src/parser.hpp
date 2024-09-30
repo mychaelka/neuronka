@@ -9,7 +9,7 @@
 // use const char * const instead of string to avoid copying? 
 
 /*
-Load data vectors (train or test)
+    Load data vectors (train or test)
 */
 static std::vector<std::vector<float>> parse_input(const std::string &vectors_file) {
     
@@ -40,7 +40,7 @@ static std::vector<std::vector<float>> parse_input(const std::string &vectors_fi
 
 
 /*
-Load label vectors (train or test)
+    Load label vectors (train or test)
 */
 static std::vector<float> parse_labels(const std::string &labels_file) {
     std::vector<float> out_labels;
