@@ -1,5 +1,4 @@
 #include <vector>
-#include "math.hpp"
 
 // class neuron: inputs, weights, bias, activation
 
