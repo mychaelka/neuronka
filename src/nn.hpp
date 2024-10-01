@@ -5,7 +5,9 @@
 class Neuron {
 public:
     std::vector<float> weights;
+    int n_weights;
     float bias;
+    float output;
 };
 
 
@@ -17,6 +19,5 @@ public:
 
 class MLP {
 public:
-    std::vector<float> weights;
-    float bias;
+    std::vector<Layer> layers;
 };

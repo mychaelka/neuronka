@@ -17,4 +17,12 @@ void tests() {
     //for (int i = 0; i < labels.size(); i++) {
     //    std::cout << labels[i] << ", ";
     //}
+
+    // softmax
+    std::vector<float> vec = {1.8f, 0.9f, 0.68f};
+    std::vector<float> vec_output = softmax(vec);
+
+    for (std::vector<float>::iterator it = vec_output.begin(); it != vec_output.end(); ++it) {
+        std::cout << *it << std::endl;
+    }
 }
