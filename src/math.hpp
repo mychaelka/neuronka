@@ -1,6 +1,7 @@
 #include <vector>
 #include <iostream>
 #include <cmath>
+#include <numeric>
 
 /*
     Linear algebra
@@ -37,6 +38,28 @@ float relu(float x) {
 
 float relu_prime(float x) {
     return x > 0.0f ? 1.0f : 0.0f;
+}
+
+float leaky_relu(float x) {
+    return std::max(0.1f * x, x);
+}
+
+float leaky_relu_prime(float x) {
+    return x > 0.0f ? 1.0f : 0.01f;
+}
+
+std::vector<float> softmax(std::vector<float> input) {
+    std::vector<float> out;
+    float exp_sum = 0.0f;
+
+    for (size_t i = 0; i < input.size(); ++i) {
+        exp_sum += std::exp(input[i]);
+    }
+
+    for (size_t j = 0; j < input.size(); ++j) {
+        out.push_back(std::exp(input[j]) / exp_sum);
+    }
+    return out;
 }
 
 // No need to implement tanh, it can already be found in std::tanh
