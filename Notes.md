@@ -1,3 +1,11 @@
 ### Notes from working on the project  
   - Vanishing gradients are a problem of activation functions, not the neural net itself.
   - During each iteration of training, each of the weights receives an update that is proportional to the partial derivative of the error function with respect to the current weight. As the network depth increases, the gradient magnitude decreases (or explodes), which slows the learning process.
+  - #### Vanishing Gradients  
+  - Like the sigmoid function, certain activation functions squish an ample input space into a small output space between 0 and 1. 
+  - Therefore, a large change in the input of the sigmoid function will cause a small change in the output. Hence, the derivative becomes small. For shallow networks with only a few layers that use these activations, this isn’t a big problem. 
+  - However, when more layers are used, it can cause the gradient to be too small for training to work effectively. 
+  - #### Exploding Gradients
+  - Exploding gradients are problems where significant error gradients accumulate and result in very large updates to neural network model weights during training. 
+  - An unstable network can result when there are exploding gradients, and the learning cannot be completed. 
+  - The values of the weights can also become so large as to overflow. 
