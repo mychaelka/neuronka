@@ -12,7 +12,7 @@ namespace nn {
         float output;
     
     public:
-        void activate(std::vector<float> inputs) {
+        void activate(const std::vector<float> &inputs) {
             this->output = nn::dot_product(weights, inputs) + bias;
         }
         void init_weights();
@@ -24,7 +24,8 @@ namespace nn {
         std::vector<Neuron> neurons;
     
     public:
-        std::vector<Neuron> get_neurons();
+        std::vector<float> get_inputs();
+        std::vector<Neuron> &get_neurons();
     };
 
 
@@ -36,7 +37,7 @@ namespace nn {
         void feed_forward() {
             for (int i = 1; i < this->layers.size(); ++i) { // for each layer
                 for (Neuron neuron : this->layers[i].get_neurons()) { //
-                    neuron.activate(this->layers[i-1].get_neurons());
+                    neuron.activate(this->layers[i-1].get_inputs());
                 }
             }
         }

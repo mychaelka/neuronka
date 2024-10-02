@@ -8,7 +8,7 @@ namespace nn {
     /*
     Linear algebra
     */ 
-    float dot_product(std::vector<float> u, std::vector<float> v) {
+    float dot_product(const std::vector<float> &u, const std::vector<float> &v) {
         if (u.size() != v.size()) {
             std::cerr << "Vectors u and v are not of the same length." << std::endl;
         }
