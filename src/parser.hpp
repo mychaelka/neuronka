@@ -17,7 +17,7 @@ static std::vector<std::vector<float>> parse_input(const std::string &vectors_fi
     std::ifstream file(vectors_file);
 
     if (!file.is_open()) {
-        std::cerr << "Error: Could not open input file." << vectors_file << std::endl;
+        std::cerr << "Error: Could not open input file " << vectors_file << std::endl;
         return out_data;
     }
 

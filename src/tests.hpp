@@ -20,9 +20,17 @@ void tests() {
 
     // softmax
     std::vector<float> vec = {1.8f, 0.9f, 0.68f};
-    std::vector<float> vec_output = softmax(vec);
+    std::vector<float> vec_output = nn::softmax(vec);
 
     for (std::vector<float>::iterator it = vec_output.begin(); it != vec_output.end(); ++it) {
         std::cout << *it << std::endl;
     }
+
+    // cross entropy
+    std::vector<float> output = {0.2f, 0.6f, 0.05f, 0.1f, 0.05f};
+    std::vector<float> output_perfect = {0.0f, 1.0f, 0.0f, 0.0f, 0.0f};
+    std::vector<int> labels_class = {0, 1, 0, 0, 0};
+
+    std::cout << "Calculated cross entropy loss: " << nn::cross_entropy_loss(output, labels_class) << std::endl;
+    std::cout << "Calculated cross entropy loss for perfect classification: " << nn::cross_entropy_loss(output_perfect, labels_class) << std::endl;
 }
