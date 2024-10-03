@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <cassert>
 #include "math.hpp"
 #include "parser.hpp"
 
@@ -33,4 +34,21 @@ void tests() {
 
     std::cout << "Calculated cross entropy loss: " << nn::cross_entropy_loss(output, labels_class) << std::endl;
     std::cout << "Calculated cross entropy loss for perfect classification: " << nn::cross_entropy_loss(output_perfect, labels_class) << std::endl;
+
+    // Vector class operators
+    std::vector<float> u = {1, 2, 3, 4, 5};
+    nn::Vector vec1 = nn::Vector(u);
+    nn::Vector vec2 = nn::Vector(u);
+    nn::Vector sum = vec1 + vec2;
+
+    std::cout << "Sum of two vectors: " << std::endl;
+    for (float elem : sum.elements()) {
+        std::cout << elem << std::endl; 
+    }
+
+    vec1 += vec2;
+    std::cout << "+= modifies given vector: " << std::endl;
+    for (float elem : vec1.elements()) {
+        std::cout << elem << std::endl; 
+    }
 }
