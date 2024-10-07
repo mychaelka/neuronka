@@ -22,10 +22,16 @@ namespace nn {
         Vector() : _size(0), _elements() {}
         Vector(size_t size) : _size(size), _elements(size) {}
         Vector(std::vector<float> elements) : _size(elements.size()), _elements(elements) {}
+        // Constructor that takes an initializer list
+        Vector(std::initializer_list<float> elements) : _size(elements.size()), _elements(elements) {}
         
         size_t size() const { return this->_size; }
 
         const std::vector<float>& elements() const { return _elements; }  // returns reference to vector elements
+
+        void set_weights(std::vector<float>& new_weights) {
+            _elements = new_weights;
+        }
 
         // operators
         float& operator[](size_t index) { return _elements[index]; }
