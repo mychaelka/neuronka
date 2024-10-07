@@ -83,4 +83,11 @@ void tests() {
 
     nn::Neuron neuron = nn::Neuron(5);
     neuron.print_weights();
+
+    nn::Layer layer = nn::Layer(3);
+    std::vector<nn::Neuron> neurons = layer.get_neurons();
+
+    for (nn::Neuron neuron : neurons) {
+        neuron.print_weights();
+    }
 }
