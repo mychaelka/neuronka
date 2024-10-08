@@ -1,6 +1,7 @@
 #include <vector>
 #include <cmath>
 #include <random>
+#include <functional>
 
 #pragma once
 
@@ -32,7 +33,7 @@ namespace nn {
 
         void set_output(float output) { _output = output; }
 
-        void activate(const nn::Vector& inputs) {
+        void set_inner_potential(const nn::Vector& inputs) {
             _output = _weights.dot_product(inputs) + _bias;
         }
 
@@ -67,17 +68,24 @@ namespace nn {
     class Layer {
     private:
         std::vector<Neuron> _neurons;
+        std::function<float(float)> _activation_function;
     
     public:
-        Layer(size_t n_neurons, size_t n_weights_per_neuron) {
+        Layer(size_t n_neurons, size_t n_weights_per_neuron)
+         : _activation_function(identity) {
             for (size_t i = 0; i < n_neurons; ++i) {
-                _neurons.emplace_back(n_weights_per_neuron);
+                if (n_weights_per_neuron > 0) {
+                    _neurons.emplace_back(n_weights_per_neuron);
+                } else {
+                    Neuron input_neuron(0);
+                    _neurons.push_back(input_neuron);
+                }
             }
         }
 
         std::vector<float> get_outputs() const {
             std::vector<float> outputs;
-            for (Neuron neuron : _neurons) {
+            for (const Neuron& neuron : get_neurons()) {
                 outputs.push_back(neuron.output());
             }
 
@@ -86,12 +94,25 @@ namespace nn {
 
         const std::vector<Neuron>& get_neurons() const { return _neurons; }
         std::vector<Neuron>& get_neurons() { return _neurons; }
+
+        void set_activation_function(std::function<float(float)> activation_function) {
+            _activation_function = activation_function;
+        }
+
+
+        void activate() {
+            for (Neuron& neuron : _neurons) {
+                float activated_output = _activation_function(neuron.output());
+                neuron.set_output(activated_output);
+            }
+        }
     };
 
 
     class MLP {
     private:
         std::vector<Layer> _layers;
+        size_t _n_layers;
 
         template<typename... Sizes>
         void create_layers(size_t input_size, size_t hidden_size, Sizes... sizes) {
@@ -114,11 +135,14 @@ namespace nn {
             };
 
             size_t input_size = get_first(sizes...);
-            _layers.emplace_back(input_size, 1);
+            _layers.emplace_back(input_size, 0);
             create_layers(sizes...);
         }
 
         const std::vector<Layer>& get_layers() const { return _layers; }
+        std::vector<Layer>& get_layers() { return _layers; }
+
+        size_t num_layers() { return _n_layers; }
 
         void feed_input(std::vector<float>& input_vector) {
             size_t i = 0;
@@ -131,14 +155,20 @@ namespace nn {
 
         void feed_forward() {
             for (int i = 1; i < _layers.size(); ++i) {
-                for (Neuron neuron : _layers[i].get_neurons()) {
-                    neuron.activate(_layers[i-1].get_outputs());
+                for (Neuron& neuron : _layers[i].get_neurons()) {
+                    neuron.set_inner_potential(_layers[i-1].get_outputs());
                 }
+
+                _layers[i].activate();
             }
         }
 
         void backward_prop();
-        void predict();
+        
+        std::vector<float> predict() const {
+            return _layers[_layers.size() - 1].get_outputs();
+        }
+        
         float accuracy();
     };
 }
