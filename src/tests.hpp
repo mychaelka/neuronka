@@ -85,16 +85,17 @@ void tests() {
     neuron.print_weights();
 
     nn::MLP mlp = nn::MLP(7, 4, 4, 7, 9);
-    int i = 0;
-    for (nn::Layer layer : mlp.get_layers()) {
-        std::cout << "Layer: " << i << std::endl;
-        for (nn::Neuron neuron : layer.get_neurons()) {
-            neuron.print_weights();
-        }
 
-        std::cout << '\n';
-        ++i;
+    size_t j = 0;
+    for (nn::Layer& layer : mlp.get_layers()) {
+        if (j == mlp.num_layers() - 1) {
+            layer.set_activation_function(nn::sigmoid);
+        } else {
+            layer.set_activation_function(nn::relu);
+        }
+        ++j;
     }
+
 
     std::vector<float> input = {1, 2, 255, 255, 0, 0, 6};
     mlp.feed_input(input);
@@ -107,4 +108,28 @@ void tests() {
     }
 
     std::cout << std::endl;
+
+    mlp.feed_forward(); // so far no activations are implemented
+
+    std::cout << "Outputs of the network: " << std::endl;
+
+    std::vector<float> out = mlp.predict();
+    for (float output : out) {
+        std::cout << output << ", ";
+    }
+
+    std::cout << std::endl;
+
+    std::cout << "Current network configuration: " << std::endl;
+    size_t i = 0;
+    for (nn::Layer layer : mlp.get_layers()) {
+        std::cout << "Layer: " << i << std::endl;
+        for (nn::Neuron neuron : layer.get_neurons()) {
+            neuron.print_weights();
+            std::cout << "Output: " << neuron.output() << std::endl;
+        }
+
+        std::cout << '\n';
+        ++i;
+    }
 }
