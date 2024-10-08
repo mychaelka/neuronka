@@ -30,6 +30,8 @@ namespace nn {
 
         float output() const { return _output; }
 
+        void set_output(float output) { _output = output; }
+
         void activate(const nn::Vector& inputs) {
             _output = _weights.dot_product(inputs) + _bias;
         }
@@ -74,10 +76,16 @@ namespace nn {
         }
 
         std::vector<float> get_outputs() const {
+            std::vector<float> outputs;
+            for (Neuron neuron : _neurons) {
+                outputs.push_back(neuron.output());
+            }
 
+            return outputs;
         }
 
-        const std::vector<Neuron> &get_neurons() const { return _neurons; }
+        const std::vector<Neuron>& get_neurons() const { return _neurons; }
+        std::vector<Neuron>& get_neurons() { return _neurons; }
     };
 
 
@@ -112,10 +120,19 @@ namespace nn {
 
         const std::vector<Layer>& get_layers() const { return _layers; }
 
+        void feed_input(std::vector<float>& input_vector) {
+            size_t i = 0;
+            
+            for (Neuron& input_neuron : _layers[0].get_neurons()) { // for every neuron in input layer...
+                input_neuron.set_output(input_vector[i]);
+                ++i;
+            }
+        }
+
         void feed_forward() {
-            for (int i = 1; i < this->_layers.size(); ++i) {
-                for (Neuron neuron : this->_layers[i].get_neurons()) {
-                    neuron.activate(this->_layers[i-1].get_outputs());
+            for (int i = 1; i < _layers.size(); ++i) {
+                for (Neuron neuron : _layers[i].get_neurons()) {
+                    neuron.activate(_layers[i-1].get_outputs());
                 }
             }
         }

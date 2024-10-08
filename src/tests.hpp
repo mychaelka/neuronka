@@ -84,7 +84,7 @@ void tests() {
     nn::Neuron neuron = nn::Neuron(5);
     neuron.print_weights();
 
-    nn::MLP mlp = nn::MLP(5, 4, 4, 7, 9);
+    nn::MLP mlp = nn::MLP(7, 4, 4, 7, 9);
     int i = 0;
     for (nn::Layer layer : mlp.get_layers()) {
         std::cout << "Layer: " << i << std::endl;
@@ -95,4 +95,16 @@ void tests() {
         std::cout << '\n';
         ++i;
     }
+
+    std::vector<float> input = {1, 2, 255, 255, 0, 0, 6};
+    mlp.feed_input(input);
+
+    std::cout << "Inputs fed into the network: " << std::endl;
+
+    std::vector<float> outputs = mlp.get_layers()[0].get_outputs();
+    for (float output : outputs) {
+        std::cout << output << ", ";
+    }
+
+    std::cout << std::endl;
 }
