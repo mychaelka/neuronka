@@ -241,6 +241,10 @@ namespace nn {
         return x > 0.0f ? 1.0f : 0.01f;
     }
 
+    float identity(float x) {
+        return x;
+    }
+
     std::vector<float> softmax(const std::vector<float>& input) {
         std::vector<float> out;
         float exp_sum = 0.0f;
