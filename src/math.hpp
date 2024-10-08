@@ -11,23 +11,20 @@ namespace nn {
       Linear algebra
     */ 
     
-    // std::vector does not have the typical vector operations defined, it is just a container 
-    class Vector {  // TODO: switch to template
+    class Vector {
     private:
         size_t _size;
         std::vector<float> _elements;
     
     public:
-        // TODO: write vector initializer with elements list
         Vector() : _size(0), _elements() {}
         Vector(size_t size) : _size(size), _elements(size) {}
         Vector(std::vector<float> elements) : _size(elements.size()), _elements(elements) {}
-        // Constructor that takes an initializer list
         Vector(std::initializer_list<float> elements) : _size(elements.size()), _elements(elements) {}
         
         size_t size() const { return this->_size; }
 
-        const std::vector<float>& elements() const { return _elements; }  // returns reference to vector elements
+        const std::vector<float>& elements() const { return _elements; }
 
         void set_weights(std::vector<float>& new_weights) {
             _elements = new_weights;
@@ -83,8 +80,6 @@ namespace nn {
         void operator*=(const float num) {
             for (size_t i = 0; i < this->size(); ++i) (*this)[i] *= num;
         }
-
-        // vector * vector?
 
         // methods
         float dot_product(const Vector& other) {
@@ -179,7 +174,7 @@ namespace nn {
         }
 
         // methods
-        Matrix dot_matrix(const Matrix& other) const {  // this matrix muse have the same number of columns as other has rows
+        Matrix dot_matrix(const Matrix& other) const {
             if (this->ncols() != other.nrows()) {
                 throw std::length_error("Matrices are not of compatible shape.");
             }
@@ -187,10 +182,10 @@ namespace nn {
             float current_cell;
 
             Matrix out = Matrix(this->nrows(), other.ncols());
-            for (size_t k = 0; k < this->nrows(); ++k) {  // for every row of first matrix
-                for (size_t i = 0; i < this->ncols(); ++i) {  // for every element in row of first matrix
+            for (size_t k = 0; k < this->nrows(); ++k) {
+                for (size_t i = 0; i < this->ncols(); ++i) {
                     current_cell = 0;
-                    for (size_t j = 0; j < other.nrows(); ++j) {  // for every element in col of second matrix
+                    for (size_t j = 0; j < other.nrows(); ++j) {
                         current_cell += this->get(k,j) * other.get(j, i);
                     }
                     
@@ -211,9 +206,6 @@ namespace nn {
                 std::cout << "|\n";
             }
         }
-
-        //void transpose();
-
     };
 
     // matrix-vector multiplication? If I want to do batch processing, instead of a vector of weights, I will have a matrix of weights 
