@@ -84,10 +84,15 @@ void tests() {
     nn::Neuron neuron = nn::Neuron(5);
     neuron.print_weights();
 
-    nn::Layer layer = nn::Layer(3);
-    std::vector<nn::Neuron> neurons = layer.get_neurons();
+    nn::MLP mlp = nn::MLP(5, 4, 4, 7, 9);
+    int i = 0;
+    for (nn::Layer layer : mlp.get_layers()) {
+        std::cout << "Layer: " << i << std::endl;
+        for (nn::Neuron neuron : layer.get_neurons()) {
+            neuron.print_weights();
+        }
 
-    for (nn::Neuron neuron : neurons) {
-        neuron.print_weights();
+        std::cout << '\n';
+        ++i;
     }
 }

@@ -72,7 +72,11 @@ namespace nn {
                 _neurons.emplace_back(n_weights_per_neuron);
             }
         }
-        std::vector<float> get_outputs() const;
+
+        std::vector<float> get_outputs() const {
+
+        }
+
         const std::vector<Neuron> &get_neurons() const { return _neurons; }
     };
 
@@ -80,12 +84,37 @@ namespace nn {
     class MLP {
     private:
         std::vector<Layer> _layers;
+
+        template<typename... Sizes>
+        void create_layers(size_t input_size, size_t hidden_size, Sizes... sizes) {
+            _layers.emplace_back(hidden_size, input_size);
+            create_layers(hidden_size, sizes...);
+        }
+
+        void create_layers(size_t hidden_size, size_t output_size) {
+            _layers.emplace_back(output_size, hidden_size);
+        }
+
     
     public:
-        MLP() {} // TODO: initializer list
+        template<typename... Sizes>
+        MLP(Sizes... sizes) {
+            static_assert(sizeof...(sizes) >= 2, "At least two sizes (input and output layers) are required.");
+            
+            auto get_first = [](auto first, auto... rest) {
+                return first; 
+            };
+
+            size_t input_size = get_first(sizes...);
+            _layers.emplace_back(input_size, 1);
+            create_layers(sizes...);
+        }
+
+        const std::vector<Layer>& get_layers() const { return _layers; }
+
         void feed_forward() {
-            for (int i = 1; i < this->_layers.size(); ++i) { // for each layer
-                for (Neuron neuron : this->_layers[i].get_neurons()) { //
+            for (int i = 1; i < this->_layers.size(); ++i) {
+                for (Neuron neuron : this->_layers[i].get_neurons()) {
                     neuron.activate(this->_layers[i-1].get_outputs());
                 }
             }
