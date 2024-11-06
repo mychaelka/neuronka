@@ -15,7 +15,7 @@ void tests() {
     //    std::cout << good_input[0][i] << std::endl;
     //}
 
-    std::vector<float> labels = parse_labels("./data/fashion_mnist_train_labels.csv");
+    //std::vector<float> labels = parse_labels("./data/fashion_mnist_train_labels.csv");
     //for (int i = 0; i < labels.size(); i++) {
     //    std::cout << labels[i] << ", ";
     //}
@@ -104,27 +104,31 @@ void tests() {
     //    ++i;
     //}
 
-    std::cout << "BACKPROPAGATION TEST" << std::endl;
-    nn::MLP mlp1(3, 4, 2);
+    nn::MLP mlp(784, 4, 10);
 
-    mlp1.get_layers()[1].set_activation_function(nn::relu, nn::relu_prime);     // Hidden layer
-    mlp1.get_layers()[2].set_activation_function(nn::sigmoid, nn::sigmoid_prime); // Output layer
+    int epochs = 100;
+    float learning_rate = 0.01;    
 
-    // Sample input and target
-    std::vector<float> input1 = {0.5, 0.1, -0.3};
-    std::vector<float> target1 = {1.0, 0.0};  // Example target
+    // Real data 
+    std::vector<std::vector<float>> inputs = parse_input("./data/fashion_mnist_train_vectors.csv");
+    std::vector<float> num_labels = parse_labels("./data/fashion_mnist_train_labels.csv");
+    std::vector<std::vector<float>> labels = nn::one_hot_all_labels(num_labels);
 
-    for (int epoch = 0; epoch < 1000; ++epoch) {
-        mlp1.feed_input(input1);
-        mlp1.feed_forward();
-        mlp1.backward_prop(target1, 0.01);
+    for (int i = 0; i < labels[0].size(); i++) {
+        std::cout << labels[0][i] << ", ";
     }
 
+    train(mlp, inputs, labels, epochs, learning_rate);
 
-    std::vector<float> output1 = mlp1.predict();
-    std::cout << "Output after training: ";
-    for (float val : output1) {
-        std::cout << val << " ";
+    std::cout << "Predictions after training:" << std::endl;
+    for (const auto& input : inputs) {
+        mlp.feed_input(input);
+        mlp.feed_forward();
+        std::vector<float> output = mlp.predict();
+
+        for (float val : output) {
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
     }
-    std::cout << std::endl;
 }
