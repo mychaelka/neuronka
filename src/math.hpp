@@ -297,4 +297,26 @@ namespace nn {
 
         return -loss;
     }
+
+    float cross_entropy_softmax(const std::vector<float>& output, const std::vector<float>& target) {
+        if (output.size() != target.size()) {
+            throw std::invalid_argument("Logits and target size must be the same.");
+        }
+
+        float max_logit = *std::max_element(output.begin(), output.end());
+
+        float log_sum_exp = 0.0f;
+        for (float logit : output) {
+            log_sum_exp += std::exp(logit - max_logit);
+        }
+        log_sum_exp = max_logit + std::log(log_sum_exp);
+
+        float loss = 0.0f;
+        for (size_t i = 0; i < output.size(); ++i) {
+            loss -= target[i] * (output[i] - log_sum_exp);
+        }
+
+        return loss;
+    }
+
 }
