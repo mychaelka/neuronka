@@ -111,95 +111,104 @@ namespace nn {
     private:
         size_t _nrows;
         size_t _ncols;
-        std::vector<Vector> _elements;  //std::vector<Vector> or std::vector<float>? 
-    
+        std::vector<float> _elements;
+
+        void check_bounds(size_t row, size_t col) const {
+            if (row >= _nrows || col >= _ncols) {
+                throw std::out_of_range("Matrix indices are out of bounds");
+            }
+        }
+
     public:
-        Matrix(size_t nrows, size_t ncols) : _nrows(nrows), _ncols(ncols), _elements(nrows, ncols) {}
-        Matrix(std::vector<Vector> elements) : _nrows(elements.size()), _ncols(elements[0].size()), _elements(elements) {}
+        Matrix(size_t nrows, size_t ncols) : _nrows(nrows), _ncols(ncols), _elements(nrows * ncols, 0.0f) {}
 
         // operators
         size_t nrows() const { return this->_nrows; }
         size_t ncols() const { return this->_ncols; }
 
         float get(size_t row, size_t col) const {
-            return this->_elements[row][col];
+            check_bounds(row, col);
+            return _elements[row * _ncols + col];
         }
 
         void set(size_t row, size_t col, float value) {
-            this->_elements[row][col] = value;
+            check_bounds(row, col);
+            _elements[row * _ncols + col] = value;
         }
 
         Matrix operator+(const Matrix& other) const {
-            if (this->nrows() != other.nrows() || this->ncols() != other.ncols()) {
+            if (_nrows != other.nrows() || this->ncols() != other.ncols()) {
                 throw std::length_error("Matrices are not of the same shape.");
             }
 
-            Matrix out = Matrix(this->nrows(), this->ncols());
-            for (size_t i = 0; i < this->nrows(); ++i) {
-                for (size_t j = 0; j < this->ncols(); ++j) {
-                    out.set(i, j, this->get(i, j) + other.get(i, j));
+            Matrix result(_nrows, _ncols);
+            for (size_t i = 0; i < _nrows; ++i) {
+                for (size_t j = 0; j < _ncols; ++j) {
+                    result.set(i, j, this->get(i, j) + other.get(i, j));
                 }
             }
-            return out;
+            return result;
         }
 
-        void operator+=(const Matrix& other) {
-            if (this->nrows() != other.nrows() || this->ncols() != other.ncols()) {
+        Matrix& operator+=(const Matrix& other) {
+            if (_nrows != other.nrows() || _ncols != other.ncols()) {
                 throw std::length_error("Matrices are not of the same shape.");
             }
 
-            for (size_t i = 0; i < this->nrows(); ++i) {
-                for (size_t j = 0; j < this->ncols(); ++j) {
+            for (size_t i = 0; i < _nrows; ++i) {
+                for (size_t j = 0; j < _ncols; ++j) {
                     (*this).set(i, j, this->get(i, j) + other.get(i, j));
                 }
             }
+
+            return *this;
         }
 
         Matrix operator*(const float num) const {
-            Matrix out = Matrix(this->nrows(), this->ncols());
-            for (size_t i = 0; i < this->nrows(); ++i) {
-                for (size_t j = 0; j < this->ncols(); ++j) {
-                    out.set(i, j, this->get(i, j) * num);
+            Matrix result(nrows(), ncols());
+            for (size_t i = 0; i < _nrows; ++i) {
+                for (size_t j = 0; j < _ncols; ++j) {
+                    result.set(i, j, this->get(i, j) * num);
                 }
             }
-            return out;
+            return result;
         }
 
-        void operator*=(const float num) {
-            for (size_t i = 0; i < this->nrows(); ++i) {
-                for (size_t j = 0; j < this->ncols(); ++j) {
+        Matrix& operator*=(const float num) {
+            for (size_t i = 0; i < _nrows; ++i) {
+                for (size_t j = 0; j < _ncols; ++j) {
                     (*this).set(i, j, this->get(i, j) * num);
                 }
             }
+
+            return *this;
         }
 
         // methods
         Matrix dot_matrix(const Matrix& other) const {
-            if (this->ncols() != other.nrows()) {
+            if (_ncols != other.nrows()) {
                 throw std::length_error("Matrices are not of compatible shape.");
             }
 
-            float current_cell;
-
-            Matrix out = Matrix(this->nrows(), other.ncols());
-            for (size_t k = 0; k < this->nrows(); ++k) {
-                for (size_t i = 0; i < this->ncols(); ++i) {
-                    current_cell = 0;
-                    for (size_t j = 0; j < other.nrows(); ++j) {
-                        current_cell += this->get(k,j) * other.get(j, i);
+            Matrix result(_nrows, other.ncols());
+            for (size_t i = 0; i < _nrows; ++i) {
+                for (size_t j = 0; j < other.ncols(); ++j) {
+                    float current_cell = 0;
+                    for (size_t k = 0; k < _ncols; ++k) {
+                        current_cell += this->get(i,k) * other.get(k, j);
                     }
                     
-                    out.set(k, i, current_cell);
+                    result.set(i, j, current_cell);
                 }
             }
 
-            return out;
+            return result;
         }
 
         void print_readable() {
-            for (size_t i = 0; i < this->nrows(); ++i) {
+            for (size_t i = 0; i < _nrows; ++i) {
                 std::cout << '|';
-                for (size_t j = 0; j < this->ncols(); ++j) {
+                for (size_t j = 0; j < _ncols; ++j) {
                     std::cout << this->get(i, j) << ", ";
                 }
 
@@ -244,6 +253,11 @@ namespace nn {
     float identity(float x) {
         return x;
     }
+
+    float identity_prime(float x) {
+        return 1.0f;
+    }
+
 
     std::vector<float> softmax(const std::vector<float>& input) {
         std::vector<float> out;
