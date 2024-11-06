@@ -3,6 +3,7 @@
 #include <cmath>
 #include <numeric>
 #include <exception>
+#include <algorithm>
 
 #pragma once 
 
@@ -273,14 +274,22 @@ namespace nn {
         return out;
     }
 
-    std::vector<int> one_hot_label(int label) {
-        std::vector<int> one_hot_result;
+    std::vector<float> one_hot_label(int label) {
+        std::vector<float> one_hot_result;
 
         for (int i = 0; i < 10; ++i) {
             i == label ? one_hot_result.push_back(1) : one_hot_result.push_back(0);
         }
 
         return one_hot_result;
+    }
+
+    std::vector<std::vector<float>> one_hot_all_labels(const std::vector<float>& labels) {
+        std::vector<std::vector<float>> one_hot_labels;
+        for (int label : labels) {
+            one_hot_labels.push_back(one_hot_label(static_cast<int>(label)));
+        }
+        return one_hot_labels;
     }
 
     /*
