@@ -12,7 +12,7 @@ namespace nn {
       Linear algebra
     */ 
     
-    class Vector {
+   /*  class Vector {
     private:
         size_t _size;
         std::vector<float> _elements;
@@ -106,10 +106,12 @@ namespace nn {
             std::cout << ')' << std::endl;
         }
  
-    };
+    }; */
     
     class Matrix {
+    
     private:
+
         size_t _nrows;
         size_t _ncols;
         std::vector<float> _elements;
@@ -121,11 +123,29 @@ namespace nn {
         }
 
     public:
-        Matrix(size_t nrows, size_t ncols) : _nrows(nrows), _ncols(ncols), _elements(nrows * ncols, 0.0f) {}
+
+        Matrix(size_t nrows, size_t ncols) : 
+            _nrows(nrows), 
+            _ncols(ncols), 
+            _elements(nrows * ncols, 0.0f) {}
+        
+        Matrix(size_t nrows, size_t ncols, std::vector<float> elements) : 
+            _nrows(nrows), 
+            _ncols(ncols), 
+            _elements(elements) {}
+
+        void consistency_check() {
+            if (_nrows * _ncols != _elements.size()) {
+                throw std::length_error("Number of elements is not a multiple of rows and cols");
+            }
+        }
 
         // operators
-        size_t nrows() const { return this->_nrows; }
-        size_t ncols() const { return this->_ncols; }
+        size_t nrows() const { return _nrows; }
+        size_t ncols() const { return _ncols; }
+
+        std::vector<float>& elements() { return _elements; }
+        const std::vector<float>& elements() const { return _elements; }
 
         float get(size_t row, size_t col) const {
             check_bounds(row, col);
@@ -135,6 +155,12 @@ namespace nn {
         void set(size_t row, size_t col, float value) {
             check_bounds(row, col);
             _elements[row * _ncols + col] = value;
+        }
+
+        void zero() {
+            for (float& elem : _elements) {
+                elem = 0.0f;
+            }
         }
 
         Matrix operator+(const Matrix& other) const {
@@ -204,6 +230,13 @@ namespace nn {
             }
 
             return result;
+        }
+
+        template <typename Func>
+        void map(Func f) {
+            for (float& elem : _elements) {
+                elem = f(elem);
+            }
         }
 
         void print_readable() {
