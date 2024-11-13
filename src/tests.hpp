@@ -11,15 +11,6 @@ void tests() {
     std::vector<std::vector<float>> bad_input = parse_input("nonexistent_file.csv");
     std::vector<std::vector<float>> good_input = parse_input("./data/fashion_mnist_train_vectors.csv");
 
-    //for (int i = 0; i < good_input[0].size(); i++) {
-    //    std::cout << good_input[0][i] << std::endl;
-    //}
-
-    //std::vector<float> labels = parse_labels("./data/fashion_mnist_train_labels.csv");
-    //for (int i = 0; i < labels.size(); i++) {
-    //    std::cout << labels[i] << ", ";
-    //}
-
     // softmax
     std::vector<float> vec = {1.8f, 0.9f, 0.68f};
     std::vector<float> vec_output = nn::softmax(vec);
@@ -36,75 +27,19 @@ void tests() {
     std::cout << "Calculated cross entropy loss: " << nn::cross_entropy_loss(output, labels_class) << std::endl;
     std::cout << "Calculated cross entropy loss for perfect classification: " << nn::cross_entropy_loss(output_perfect, labels_class) << std::endl;
 
-    // Vector class operators
-    std::vector<float> u = {1, 2, 3, 4, 5};
-    nn::Vector vec1 = nn::Vector(u);
-    vec1[4] = 8;
-    nn::Vector vec2 = nn::Vector(u);
-    nn::Vector sum = vec1 + vec2;
 
-    std::cout << "Sum of two vectors: " << std::endl;
-    sum.print_readable();
-
-    vec1 += vec2;
-    std::cout << "+= modifies given vector: " << std::endl;
-    vec1.print_readable();
-
-    //nn::Matrix wrong_prod = matrix1.dot_matrix(matrix3);
-
-    //nn::Neuron neuron = nn::Neuron(5);
-    //neuron.print_weights();
-
-    //nn::MLP mlp = nn::MLP(7, 4, 4, 7, 9);
-
-    //size_t j = 0;
-    //for (nn::Layer& layer : mlp.get_layers()) {
-    //    if (j == mlp.num_layers() - 1) {
-    //        layer.set_activation_function(nn::sigmoid, nn::sigmoid_prime);
-    //    } else {
-    //        layer.set_activation_function(nn::relu, nn::relu_prime);
-    //    }
-    //    ++j;
-    //}
+    nn::Matrix matrix = nn::Matrix(5, 1);
+    matrix.set(0, 0, 1);
+    matrix.set(1, 0, -1);
+    matrix.set(2, 0, 5);
+    matrix.set(4, 0, -7);
+    matrix.print_readable();
+    //matrix.map([](float x) { return x * x; });
+    matrix.map(nn::relu);
+    matrix.print_readable();
 
 
-    //std::vector<float> input = {1, 2, 255, 255, 0, 0, 6};
-    //mlp.feed_input(input);
-
-    //std::cout << "Inputs fed into the network: " << std::endl;
-
-    //std::vector<float> outputs = mlp.get_layers()[0].get_outputs();
-    //for (float output : outputs) {
-    //    std::cout << output << ", ";
-    //}
-
-    //std::cout << std::endl;
-
-    //mlp.feed_forward(); // so far no activations are implemented
-
-    //std::cout << "Outputs of the network: " << std::endl;
-
-    //std::vector<float> out = mlp.predict();
-    //for (float output : out) {
-    //    std::cout << output << ", ";
-    //}
-
-    //std::cout << std::endl;
-
-    //std::cout << "Current network configuration: " << std::endl;
-    //size_t i = 0;
-    //for (nn::Layer layer : mlp.get_layers()) {
-    //    std::cout << "Layer: " << i << std::endl;
-    //    for (nn::Neuron neuron : layer.get_neurons()) {
-    //        neuron.print_weights();
-    //        std::cout << "Output: " << neuron.output() << std::endl;
-    //    }
-
-    //    std::cout << '\n';
-    //    ++i;
-    //}
-
-    nn::MLP mlp(784, 4, 10);
+    nn::MLP mlp({784, 8, 16, 9}, 1);
 
     int epochs = 100;
     float learning_rate = 0.01;    
@@ -114,11 +49,23 @@ void tests() {
     std::vector<float> num_labels = parse_labels("./data/fashion_mnist_train_labels.csv");
     std::vector<std::vector<float>> labels = nn::one_hot_all_labels(num_labels);
 
-    for (int i = 0; i < labels[0].size(); i++) {
-        std::cout << labels[0][i] << ", ";
-    }
+    nn::Matrix label_matrix = nn::Matrix(60000, 1, num_labels);
+    nn::Matrix input_matrix = nn::Matrix(784, 1, inputs[0]);
+    label_matrix.consistency_check();
+    input_matrix.consistency_check();
 
-    train(mlp, inputs, labels, epochs, learning_rate);
+    //label_matrix.print_readable();
+    std::cout << label_matrix.nrows() << " ";
+    std::cout << label_matrix.ncols() << " ";
+
+    //input_matrix.print_readable();
+
+    mlp.feed_forward(input_matrix);
+    nn::Matrix out = mlp.layers().back().get_output();
+    out.print_readable();
+    
+
+    /* train(mlp, inputs, labels, epochs, learning_rate);
 
     std::cout << "Predictions after training:" << std::endl;
     for (const auto& input : inputs) {
@@ -130,5 +77,5 @@ void tests() {
             std::cout << val << " ";
         }
         std::cout << std::endl;
-    }
+    } */
 }
