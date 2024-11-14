@@ -8,20 +8,24 @@
 #pragma once 
 
 namespace nn {
-    /*
-      Linear algebra
-    */ 
+    /* Linear algebra */ 
     class Matrix {
     
     private:
 
         size_t _nrows;
         size_t _ncols;
-        std::vector<float> _elements;
+        std::vector<float> _data;
 
         void check_bounds(size_t row, size_t col) const {
             if (row >= _nrows || col >= _ncols) {
                 throw std::out_of_range("Matrix indices are out of bounds");
+            }
+        }
+
+        void consistency_check() {
+            if (_nrows * _ncols != _data.size()) {
+                throw std::length_error("Number of elements is not a multiple of rows and cols");
             }
         }
 
@@ -30,38 +34,48 @@ namespace nn {
         Matrix(size_t nrows, size_t ncols) : 
             _nrows(nrows), 
             _ncols(ncols), 
-            _elements(nrows * ncols, 0.0f) {}
+            _data(nrows * ncols, 0.0f) { consistency_check(); }
         
-        Matrix(size_t nrows, size_t ncols, std::vector<float> elements) : 
+        Matrix(size_t nrows, size_t ncols, std::vector<float> data) : 
             _nrows(nrows), 
             _ncols(ncols), 
-            _elements(elements) {}
+            _data(data) { consistency_check(); }
+        
+        Matrix(const std::vector<std::vector<float>>& data) :
+            _nrows(data.size()), 
+            _ncols(data.empty() ? 0 : data[0].size()), 
+            _data() {
 
-        void consistency_check() {
-            if (_nrows * _ncols != _elements.size()) {
-                throw std::length_error("Number of elements is not a multiple of rows and cols");
+                _data.reserve(_nrows * _ncols);
+                for (const auto& row : data) {
+                    if (row.size() != _ncols) {
+                        throw std::invalid_argument("Inconsistent row sizes in input data");
+                    }
+                    _data.insert(_data.end(), row.begin(), row.end());
+                }
+
+                consistency_check();
             }
-        }
 
         // operators
         size_t nrows() const { return _nrows; }
         size_t ncols() const { return _ncols; }
 
-        std::vector<float>& elements() { return _elements; }
-        const std::vector<float>& elements() const { return _elements; }
+        std::vector<float>& data() { return _data; }
+        const std::vector<float>& data() const { return _data; }
 
         float get(size_t row, size_t col) const {
             check_bounds(row, col);
-            return _elements[row * _ncols + col];
+            return _data[row * _ncols + col];
         }
 
         void set(size_t row, size_t col, float value) {
             check_bounds(row, col);
-            _elements[row * _ncols + col] = value;
+            _data[row * _ncols + col] = value;
         }
 
         void zero() {
-            for (float& elem : _elements) {
+            for (float& elem : _data) {
                 elem = 0.0f;
             }
         }
@@ -114,7 +128,7 @@ namespace nn {
             return *this;
         }
 
-        // methods
+        /* Methods */
         Matrix dot_matrix(const Matrix& other) const {
             if (_ncols != other.nrows()) {
                 throw std::length_error("Matrices are not of compatible shape.");
@@ -134,10 +148,22 @@ namespace nn {
 
             return result;
         }
+        
+        /* Transpose -- creates new matrix */
+        Matrix transpose() const {
+            Matrix transposed(_ncols, _nrows);
+            for (size_t i = 0; i < _nrows; ++i) {
+                for (size_t j = 0; j < _ncols; ++j) {
+                    transposed.set(j, i, this->get(i, j));
+                }
+            }
+            return transposed;
+        }
+
 
         template <typename Func>
         void map(Func f) {
-            for (float& elem : _elements) {
+            for (float& elem : _data) {
                 elem = f(elem);
             }
         }
@@ -210,6 +236,7 @@ namespace nn {
         return out;
     }
 
+    /* One-hot encode individual label */
     std::vector<float> one_hot_label(int label) {
         std::vector<float> one_hot_result;
 
@@ -220,6 +247,7 @@ namespace nn {
         return one_hot_result;
     }
 
+    /* One-hot encode multiple labels */
     std::vector<std::vector<float>> one_hot_all_labels(const std::vector<float>& labels) {
         std::vector<std::vector<float>> one_hot_labels;
         for (int label : labels) {
@@ -228,22 +256,27 @@ namespace nn {
         return one_hot_labels;
     }
 
-    /*
-      Loss function
-    */
-    float cross_entropy_loss(const std::vector<float>& output, const std::vector<int>& one_hot_label) {
-        float loss = 0.0f;
+    /* Loss function */
+    float cross_entropy_loss(const Matrix& outputs, const Matrix& targets) {
+        float total_loss = 0.0f;
         float epsilon = 1e-8;  // prevent log(0)
 
-        for (size_t i = 0; i < output.size(); ++i) {
-            float p = std::max(epsilon, output[i]);
-            loss += one_hot_label[i] * std::log(p);
+        for (size_t k = 0; k < outputs.ncols(); ++k) {
+            float sample_loss = 0.0f;
+            
+            for (size_t i = 0; i < outputs.nrows(); ++i) {
+                float p = std::max(epsilon, outputs.get(i, k));
+                float t = targets.get(i, k);
+                sample_loss += t * std::log(p);
+            }
+
+            total_loss += sample_loss;
         }
 
-        return -loss;
+        return -total_loss;
     }
 
-    float cross_entropy_softmax(const std::vector<float>& output, const std::vector<float>& target) {
+    /* float cross_entropy_softmax(const std::vector<float>& output, const std::vector<float>& target) {
         if (output.size() != target.size()) {
             throw std::invalid_argument("Logits and target size must be the same.");
         }
@@ -263,5 +296,5 @@ namespace nn {
 
         return loss;
     }
-
+ */
 }
