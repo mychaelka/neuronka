@@ -95,13 +95,22 @@ namespace nn {
         }
 
         Matrix& operator+=(const Matrix& other) {
-            if (_nrows != other.nrows() || _ncols != other.ncols()) {
-                throw std::length_error("Matrices are not of the same shape.");
+            if (_nrows != other.nrows() || (other.ncols() != 1 && _ncols != other.ncols())) {
+                throw std::length_error("Matrices are not of compatible shape or other matrix cannot be broadcast.");
             }
 
-            for (size_t i = 0; i < _nrows; ++i) {
-                for (size_t j = 0; j < _ncols; ++j) {
-                    (*this).set(i, j, this->get(i, j) + other.get(i, j));
+            /* Broadcasting -- because bias is a vector of input_size x 1  */
+            if (other.ncols() == 1) {
+                for (size_t i = 0; i < _nrows; ++i) {
+                    for (size_t j = 0; j < _ncols; ++j) {
+                        _data[i * _ncols + j] += other.get(i, 0);
+                    }
+                }
+            } else {
+                for (size_t i = 0; i < _nrows; ++i) {
+                    for (size_t j = 0; j < _ncols; ++j) {
+                        _data[i * _ncols + j] += other.get(i, j);
+                    }
                 }
             }
 
