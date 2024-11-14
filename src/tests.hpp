@@ -11,14 +11,6 @@ void tests() {
     std::vector<std::vector<float>> bad_input = parse_input("nonexistent_file.csv");
     std::vector<std::vector<float>> good_input = parse_input("./data/fashion_mnist_train_vectors.csv");
 
-    // softmax
-    std::vector<float> vec = {1.8f, 0.9f, 0.68f};
-    std::vector<float> vec_output = nn::softmax(vec);
-
-    for (std::vector<float>::iterator it = vec_output.begin(); it != vec_output.end(); ++it) {
-        std::cout << *it << std::endl;
-    }
-
     // cross entropy
     std::vector<float> output = {0.2f, 0.6f, 0.05f, 0.1f, 0.05f};
     std::vector<float> output_perfect = {0.0f, 1.0f, 0.0f, 0.0f, 0.0f};
@@ -77,4 +69,22 @@ void tests() {
         }
         std::cout << std::endl;
     } */
+
+   /* XOR */
+    std::vector<std::vector<float>> xor_train_inputs = {
+        {0.0f, 0.0f},
+        {0.0f, 1.0f},
+        {1.0f, 0.0f},
+        {1.0f, 1.0f}
+    };
+
+    std::vector<std::vector<float>> xor_train_labels = {
+        {0.0f},
+        {1.0f},
+        {1.0f},
+        {0.0f}
+    };
+
+    std::vector<std::vector<float>> xor_test_inputs = xor_train_inputs;
+    std::vector<std::vector<float>> xor_test_outputs = xor_train_labels;
 }
