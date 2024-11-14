@@ -24,8 +24,8 @@ void tests() {
     std::vector<float> output_perfect = {0.0f, 1.0f, 0.0f, 0.0f, 0.0f};
     std::vector<int> labels_class = {0, 1, 0, 0, 0};
 
-    std::cout << "Calculated cross entropy loss: " << nn::cross_entropy_loss(output, labels_class) << std::endl;
-    std::cout << "Calculated cross entropy loss for perfect classification: " << nn::cross_entropy_loss(output_perfect, labels_class) << std::endl;
+    //std::cout << "Calculated cross entropy loss: " << nn::cross_entropy_loss(output, labels_class) << std::endl;
+    //std::cout << "Calculated cross entropy loss for perfect classification: " << nn::cross_entropy_loss(output_perfect, labels_class) << std::endl;
 
 
     nn::Matrix matrix = nn::Matrix(5, 1);
@@ -49,20 +49,19 @@ void tests() {
     std::vector<float> num_labels = parse_labels("./data/fashion_mnist_train_labels.csv");
     std::vector<std::vector<float>> labels = nn::one_hot_all_labels(num_labels);
 
-    nn::Matrix label_matrix = nn::Matrix(60000, 1, num_labels);
-    nn::Matrix input_matrix = nn::Matrix(784, 1, inputs[0]);
-    label_matrix.consistency_check();
-    input_matrix.consistency_check();
+    nn::Matrix label_matrix = nn::Matrix(labels).transpose();
+    nn::Matrix input_matrix = nn::Matrix(inputs).transpose();
+    std::cout << input_matrix.nrows() << " ";
+    std::cout << input_matrix.ncols() << std::endl;
 
     //label_matrix.print_readable();
     std::cout << label_matrix.nrows() << " ";
-    std::cout << label_matrix.ncols() << " ";
+    std::cout << label_matrix.ncols() << std::endl;
 
     //input_matrix.print_readable();
 
-    mlp.feed_forward(input_matrix);
-    nn::Matrix out = mlp.layers().back().get_output();
-    out.print_readable();
+    //mlp.feed_forward(input_matrix);
+    //nn::Matrix out = mlp.layers().back().get_output();
     
 
     /* train(mlp, inputs, labels, epochs, learning_rate);
