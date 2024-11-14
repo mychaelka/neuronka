@@ -34,7 +34,7 @@ namespace nn {
         Layer(size_t output_size, size_t input_size, size_t batch_size)
          : _output_size(output_size),
          _input_size(input_size),
-         _input(nullptr),
+         _input(nullptr),  // input_size x 1
          _output(output_size, batch_size),
          _weights(output_size, input_size),
          _biases(output_size, 1),
@@ -59,11 +59,11 @@ namespace nn {
             //std::normal_distribution<float> distribution(0.0f, std::sqrt(2.0f / _input_size));
             std::uniform_real_distribution<float> distribution(min_value, max_value);
 
-            for (float& weight : _weights.elements()) {
+            for (float& weight : _weights.data()) {
                 weight = distribution(generator);
             }
 
-            for (float& bias : _biases.elements()) {
+            for (float& bias : _biases.data()) {
                 bias = distribution(generator);
             }
         }
@@ -80,7 +80,7 @@ namespace nn {
             }
 
             _output = _weights.dot_matrix(*_input); // creates new matrix
-            _output += _biases; // modifies _output directly
+            _output += _biases; // modifies _output directly - TODO: broadcast
             _output.map(_activation_function); // modifies _output directly
         }
 
@@ -93,6 +93,8 @@ namespace nn {
              _biases += _bias_delta * (-learning_rate);
         }
 
+        /* Applies softmax to the layer -- modifies the layer output, to be used 
+        only for the last layer of network */
         void apply_softmax() {
             for (size_t j = 0; j < _output.ncols(); ++j) {
                 float max_val = _output.get(0, j);
@@ -224,19 +226,10 @@ namespace nn {
         }       
 
         std::vector<float> predict() const {}
-
-        float categorical_cross_entropy(const Matrix& output, const std::vector<float>& target) const {
-            float loss = 0.0f;
-            for (size_t i = 0; i < target.size(); ++i) {
-                float predicted = output.get(i, 0);
-                loss -= target[i] * std::log(predicted + 1e-8f);
-            }
-            return loss;
-        }
     };
 
 
-    void train(nn::MLP& network, const std::vector<std::vector<float>>& inputs,
+    /* void train(nn::MLP& network, const std::vector<std::vector<float>>& inputs,
            const std::vector<std::vector<float>>& targets, int epochs, float learning_rate, size_t batch_size) {
     
         const size_t num_samples = inputs.size();
@@ -287,5 +280,5 @@ namespace nn {
             std::cout << "Epoch " << epoch + 1 << "/" << epochs 
                     << ", Loss: " << total_loss / (num_samples / batch_size) << std::endl;
         }
-    }
+    } */
 }
