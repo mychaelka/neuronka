@@ -48,6 +48,8 @@ namespace nn {
 
         Matrix& get_weights() { return _weights; }
 
+        Matrix& get_deltas() { return _deltas; }
+
         void init_weights(float min_value = 0.0f, float max_value = 1.0f) {
             std::random_device rd;
             std::mt19937 generator(rd());
@@ -142,6 +144,10 @@ namespace nn {
             }
         }
 
+        void update(float learning_rate) {
+             _weights += _weights_grad * (-learning_rate);
+             _biases += _bias_grad * (-learning_rate);
+        }
         
         /* Applies softmax to the layer -- modifies the layer output, to be used 
         only for the last layer of network */
@@ -212,60 +218,60 @@ namespace nn {
             return _layers.back().get_output();
         } 
 
-        std::vector<float> predict() const {}
+        void backward(const Matrix& target, float learning_rate) {
+            _layers.back().compute_output_deltas(target);
+
+            for (int layer_idx = _layers.size() - 2; layer_idx >= 0; --layer_idx) {
+                Layer& current_layer = _layers[layer_idx];
+                Layer& next_layer = _layers[layer_idx + 1];
+
+                current_layer.compute_hidden_deltas(next_layer.get_weights(), next_layer.get_deltas());
+            }
+
+            for (Layer& layer : _layers) {
+                layer.compute_gradients();
+            }
+
+            for (Layer& layer : _layers) {
+                layer.update(learning_rate);
+            }
+        }
+
+        std::vector<float> predict(const Matrix& input) {
+            const Matrix& output = feed_forward(input);
+            std::vector<float> predictions;
+
+            for (size_t i = 0; i < output.ncols(); ++i) {
+                size_t max_index = 0;
+                float max_value = output.get(0, i);
+
+                for (size_t j = 1; j < output.nrows(); ++j) {
+                    if (output.get(j, i) > max_value) {
+                        max_index = j;
+                        max_value = output.get(j, i);
+                    }
+                }
+                predictions.push_back(max_index);
+            }
+
+            return predictions;
+        } 
     };
 
 
-    /* void train(nn::MLP& network, const std::vector<std::vector<float>>& inputs,
-           const std::vector<std::vector<float>>& targets, int epochs, float learning_rate, size_t batch_size) {
-    
-        const size_t num_samples = inputs.size();
-        
+    void train(nn::MLP& network, const std::vector<Matrix>& inputs, const std::vector<Matrix>& targets, int epochs, float learning_rate) {
         for (int epoch = 0; epoch < epochs; ++epoch) {
             float total_loss = 0.0f;
 
-            for (size_t batch_start = 0; batch_start < num_samples; batch_start += batch_size) {
-                size_t current_batch_size = std::min(batch_size, num_samples - batch_start);
+            for (size_t batch_idx = 0; batch_idx < inputs.size(); ++batch_idx) {
+                const Matrix& output = network.feed_forward(inputs[batch_idx]);
 
-                Matrix input_matrix(inputs[0].size(), current_batch_size);
-                Matrix target_matrix(targets[0].size(), current_batch_size);
-
-                for (size_t i = 0; i < current_batch_size; ++i) {
-                    const auto& input = inputs[batch_start + i];
-                    const auto& target = targets[batch_start + i];
-
-                    for (size_t j = 0; j < input.size(); ++j) {
-                        input_matrix.set(j, i, input[j]);  // j is input dimension, i is batch sample
-                    }
-
-                    for (size_t j = 0; j < target.size(); ++j) {
-                        target_matrix.set(j, i, target[j]);  // j is target dimension, i is batch sample
-                    }
-                }
-
-                const Matrix& output = network.feed_forward(input_matrix);
-
-                float batch_loss = 0.0f;
-                for (size_t i = 0; i < current_batch_size; ++i) {
-                    std::vector<float> output_sample(output.nrows());
-                    std::vector<float> target_sample(target_matrix.nrows());
-                    
-                    for (size_t j = 0; j < output_sample.size(); ++j) {
-                        output_sample[j] = output.get(j, i);
-                    }
-                    for (size_t j = 0; j < target_sample.size(); ++j) {
-                        target_sample[j] = target_matrix.get(j, i);
-                    }
-
-                    batch_loss += network.categorical_cross_entropy(output_sample, target_sample);
-                }
-                total_loss += batch_loss / current_batch_size;
-
-                network.backward(target_matrix, learning_rate);
+                total_loss += cross_entropy_loss(output, targets[batch_idx]);
+                network.backward(targets[batch_idx], learning_rate);
             }
 
-            std::cout << "Epoch " << epoch + 1 << "/" << epochs 
-                    << ", Loss: " << total_loss / (num_samples / batch_size) << std::endl;
+            std::cout << "Epoch " << epoch + 1 << "/" << epochs
+                    << ", Loss: " << total_loss / inputs.size() << std::endl;
         }
-    } */
+    }
 }
