@@ -5,8 +5,6 @@
 
 #pragma once
 
-// TODO: scale the input data
-
 namespace nn {
     class Layer {
     
@@ -50,19 +48,19 @@ namespace nn {
 
         Matrix& get_deltas() { return _deltas; }
 
-        void init_weights(float min_value = 0.0f, float max_value = 1.0f) {
+        void init_weights() {
             std::random_device rd;
             std::mt19937 generator(rd());
 
-            //std::normal_distribution<float> distribution(0.0f, std::sqrt(2.0f / _input_size));
-            std::uniform_real_distribution<float> distribution(min_value, max_value);
+            std::normal_distribution<float> weight_distribution(0.0f, std::sqrt(2.0f / _input_size)); // He 
 
             for (float& weight : _weights.data()) {
-                weight = distribution(generator);
+                weight = weight_distribution(generator);
             }
 
+            std::uniform_real_distribution<float> bias_distribution(-0.1f, 0.1f);
             for (float& bias : _biases.data()) {
-                bias = distribution(generator);
+                bias = bias_distribution(generator);
             }
         }
 
@@ -199,13 +197,17 @@ namespace nn {
             }
         }
 
-        const std::vector<Layer>& layers() const { return _layers; }
+        //const std::vector<Layer>& layers() const { return _layers; }
         std::vector<Layer>& layers() { return _layers; }
 
         const Matrix& feed_forward(const Matrix& input) {
             _layers[0].input(input);
             
             for (size_t i = 0; i < _layers.size(); ++i) {
+                if (i == _layers.size() - 1) {
+                    _layers[i].set_activation_function(identity, identity_prime); // if last layer, set activation to identity and apply softmax after
+                }
+
                 _layers[i].output();
 
                 if (i == _layers.size() - 1) {
@@ -217,6 +219,7 @@ namespace nn {
 
             return _layers.back().get_output();
         } 
+
 
         void backward(const Matrix& target, float learning_rate) {
             _layers.back().compute_output_deltas(target);
@@ -230,12 +233,14 @@ namespace nn {
 
             for (Layer& layer : _layers) {
                 layer.compute_gradients();
-            }
-
-            for (Layer& layer : _layers) {
                 layer.update(learning_rate);
             }
+
+            /* for (Layer& layer : _layers) {
+                layer.update(learning_rate);
+            } */
         }
+
 
         std::vector<float> predict(const Matrix& input) {
             const Matrix& output = feed_forward(input);
@@ -258,9 +263,47 @@ namespace nn {
         } 
     };
 
+    std::vector<Matrix> create_batches(const Matrix& data, size_t batch_size) {
+        std::vector<Matrix> batches;
+        size_t num_batches = (data.ncols() + batch_size - 1) / batch_size;
 
-    void train(nn::MLP& network, const std::vector<Matrix>& inputs, const std::vector<Matrix>& targets, int epochs, float learning_rate) {
+        for (size_t i = 0; i < num_batches; ++i) {
+            size_t start = i * batch_size;
+            size_t end = std::min(start + batch_size, data.ncols());
+
+            std::vector<float> batch_elements;
+            for (size_t row = 0; row < data.nrows(); ++row) {
+                for (size_t col = start; col < end; ++col) {
+                    batch_elements.push_back(data.get(row, col));
+                }
+            }
+
+            batches.emplace_back(data.nrows(), end - start, batch_elements);
+        }
+
+        return batches;
+    }
+
+    void shuffle_batches(std::vector<Matrix>& inputs, std::vector<Matrix>& targets) {
+        std::vector<size_t> indices(inputs.size());
+        std::iota(indices.begin(), indices.end(), 0);
+        std::random_device rd;
+        std::mt19937 generator(rd());
+        std::shuffle(indices.begin(), indices.end(), generator);
+
+        std::vector<Matrix> shuffled_inputs;
+        std::vector<Matrix> shuffled_targets;
+        for (size_t idx : indices) {
+            shuffled_inputs.push_back(inputs[idx]);
+            shuffled_targets.push_back(targets[idx]);
+        }
+        inputs = std::move(shuffled_inputs);
+        targets = std::move(shuffled_targets);
+    }
+
+    void train(nn::MLP& network, std::vector<Matrix>& inputs, std::vector<Matrix>& targets, int epochs, float learning_rate) {
         for (int epoch = 0; epoch < epochs; ++epoch) {
+            shuffle_batches(inputs, targets);
             float total_loss = 0.0f;
 
             for (size_t batch_idx = 0; batch_idx < inputs.size(); ++batch_idx) {
@@ -271,7 +314,8 @@ namespace nn {
             }
 
             std::cout << "Epoch " << epoch + 1 << "/" << epochs
-                    << ", Loss: " << total_loss / inputs.size() << std::endl;
+                    << ", Loss: " << total_loss << std::endl;
         }
     }
+
 }
