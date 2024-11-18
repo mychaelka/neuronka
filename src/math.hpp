@@ -187,13 +187,34 @@ namespace nn {
                 std::cout << "|\n";
             }
         }
+
+        void normalize() {
+            float sum = 0.0f;
+            size_t total_elements = _data.size();
+
+            for (const float& value : _data) {
+                sum += value;
+            }
+
+            float mean = sum / total_elements;
+
+            float variance_sum = 0.0f;
+            for (const float& value : _data) {
+                variance_sum += (value - mean) * (value - mean);
+            }
+
+            float variance = variance_sum / total_elements;
+            float std_dev = std::sqrt(variance);
+
+            if (std_dev == 0.0f) {
+                std_dev = 1.0f;
+            }
+
+            for (float& value : _data) {
+                value = (value - mean) / std_dev;
+            }
+        }
     };
-
-    // matrix-vector multiplication? If I want to do batch processing, instead of a vector of weights, I will have a matrix of weights 
-    //std::vector<std::vector<float>> matrix_dot_product();
-    //std::vector<float> matrix_dot_vector();
-    //std::vector<float> vector_dot_matrix();
-
     
     /*
       Activation functions
@@ -271,18 +292,14 @@ namespace nn {
         float epsilon = 1e-8;  // prevent log(0)
 
         for (size_t k = 0; k < outputs.ncols(); ++k) {
-            float sample_loss = 0.0f;
-            
             for (size_t i = 0; i < outputs.nrows(); ++i) {
                 float p = std::max(epsilon, outputs.get(i, k));
                 float t = targets.get(i, k);
-                sample_loss += t * std::log(p);
+                total_loss -= t * std::log(p);
             }
-
-            total_loss += sample_loss;
         }
 
-        return -total_loss;
+        return total_loss;
     }
 
     /* float cross_entropy_softmax(const std::vector<float>& output, const std::vector<float>& target) {
