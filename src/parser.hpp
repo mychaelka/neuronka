@@ -4,10 +4,6 @@
 #include <string>
 #include <vector>
 
-
-// Ideas: maybe do not create output inside the function but modify already created? 
-// use const char * const instead of string to avoid copying? 
-
 /*
     Load data vectors (train or test)
 */
