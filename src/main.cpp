@@ -23,7 +23,7 @@ void mnist() {
     
     size_t input_size = 784;
     size_t num_classes = 10;
-    size_t batch_size = 128;
+    size_t batch_size = 64;
 
     nn::MLP mnist_network({input_size, 128, 64, num_classes}, batch_size);
 

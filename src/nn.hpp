@@ -10,7 +10,7 @@ namespace nn {
     std::vector<Matrix> create_batches(const Matrix& data, size_t batch_size) {
         std::vector<Matrix> batches;
         size_t num_batches = (data.ncols() + batch_size - 1) / batch_size;
-
+        
         for (size_t i = 0; i < num_batches; ++i) {
             size_t start = i * batch_size;
             size_t end = std::min(start + batch_size, data.ncols());
@@ -134,7 +134,9 @@ namespace nn {
             _input = &input;
         }
 
+       /*  E over y for last layer */
         void compute_output_deltas(const Matrix& target_batch) {
+            #pragma omp parallel for
             for (size_t k = 0; k < _output.ncols(); ++k) {
                 for (size_t j = 0; j < _output.nrows(); ++j) {
                     float output_val = _output.get(j, k);
@@ -146,8 +148,9 @@ namespace nn {
             }
         }
 
+        /*  E over y for hidden layers */
         void compute_hidden_deltas(const Matrix& next_weights, const Matrix& next_deltas) {
-
+            #pragma omp parallel for
             for (size_t k = 0; k < _output.ncols(); ++k) {
                 for (size_t j = 0; j < _output.nrows(); ++j) {
                     float delta_sum = 0.0f;
@@ -162,30 +165,29 @@ namespace nn {
             }
         }
 
+        /* E over w */
         void compute_gradients() {
             _weights_grad.zero();
             _bias_grad.zero();
 
-            for (size_t j = 0; j < _weights.nrows(); ++j) {
-                for (size_t i = 0; i < _weights.ncols(); ++i) {
-                    float grad_sum = 0.0f;
-
-                    for (size_t k = 0; k < _input->ncols(); ++k) {
-                        grad_sum += _deltas.get(j, k) * _input->get(i, k);
+            #pragma omp parallel for
+            for (size_t k = 0; k < _input->ncols(); ++k) {
+                for (size_t j = 0; j < _weights.nrows(); ++j) {
+                    for (size_t i = 0; i < _weights.ncols(); ++i) {
+                        _weights_grad.data()[j * _weights.ncols() + i] += _deltas.data()[j * _deltas.ncols() + k] * _input->data()[i * _input->ncols() + k];
                     }
-
-                    _weights_grad.set(j, i, grad_sum);
                 }
             }
 
+            #pragma omp parallel for
             for (size_t j = 0; j < _bias_grad.nrows(); ++j) {
                 float bias_grad_sum = 0.0f;
 
                 for (size_t k = 0; k < _deltas.ncols(); ++k) {
-                    bias_grad_sum += _deltas.get(j, k);
+                    bias_grad_sum += _deltas.data()[j * _deltas.ncols() + k];
                 }
 
-                _bias_grad.set(j, 0, bias_grad_sum);
+                _bias_grad.data()[j] = bias_grad_sum;
             }
         }
 

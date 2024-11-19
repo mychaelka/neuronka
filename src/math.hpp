@@ -129,15 +129,16 @@ namespace nn {
                 throw std::length_error("Matrices are not of compatible shape.");
             }
 
+            Matrix transposed_other = other.transpose();
+
             Matrix result(_nrows, other._ncols);
             #pragma omp parallel for
             for (size_t i = 0; i < _nrows; ++i) {
                 for (size_t j = 0; j < other._ncols; ++j) {
                     float current_cell = 0.0f;
                     for (size_t k = 0; k < _ncols; ++k) {
-                        current_cell += _data[i * _ncols + k] * other._data[k * other._ncols + j];
+                        current_cell += _data[i * _ncols + k] * transposed_other._data[j * _ncols + k];
                     }
-                    
                     result._data[i * other._ncols + j] = current_cell;
                 }
             }
@@ -159,7 +160,7 @@ namespace nn {
 
         template <typename Func>
         void map(Func f) {
-            #pragma clang loop vectorize(assume_safety)
+            #pragma omp parallel for
             for (size_t i = 0; i < _data.size(); ++i) {
                 _data[i] = f(_data[i]);
             }
