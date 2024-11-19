@@ -4,9 +4,9 @@
 #include <string>
 #include <vector>
 
-/*
-    Load data vectors (train or test)
-*/
+#pragma once
+
+/* Load data vectors (train or test) */
 static std::vector<std::vector<float>> parse_input(const std::string &vectors_file) {
     
     std::vector<std::vector<float>> out_data;
@@ -24,7 +24,7 @@ static std::vector<std::vector<float>> parse_input(const std::string &vectors_fi
         std::string cell;
         
         while (std::getline(line_stream, cell, ',')) {
-            row.push_back(std::stof(cell));  // converts string to float
+            row.push_back(std::stof(cell));
         }
         
         out_data.push_back(row);
@@ -35,9 +35,7 @@ static std::vector<std::vector<float>> parse_input(const std::string &vectors_fi
 }
 
 
-/*
-    Load label vectors (train or test)
-*/
+/* Load label vectors (train or test) */
 static std::vector<float> parse_labels(const std::string &labels_file) {
     std::vector<float> out_labels;
     std::ifstream file(labels_file);
@@ -54,4 +52,18 @@ static std::vector<float> parse_labels(const std::string &labels_file) {
 
     file.close();
     return out_labels;
+}
+
+/* Write predictions to file */
+void write_predictions(const std::string& filename, const std::vector<float>& predictions) {
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        throw std::runtime_error("Unable to open file: " + filename);
+    }
+
+    for (const auto& prediction : predictions) {
+        file << static_cast<int>(prediction) << "\n";
+    }
+
+    file.close();
 }
