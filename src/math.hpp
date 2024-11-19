@@ -57,7 +57,6 @@ namespace nn {
                 consistency_check();
             }
 
-        // operators
         size_t nrows() const { return _nrows; }
         size_t ncols() const { return _ncols; }
 
@@ -80,6 +79,7 @@ namespace nn {
             }
         }
 
+        /* Operators */
         Matrix operator+(const Matrix& other) const {
             if (_nrows != other.nrows() || this->ncols() != other.ncols()) {
                 throw std::length_error("Matrices are not of the same shape.");
@@ -216,9 +216,7 @@ namespace nn {
         }
     };
     
-    /*
-      Activation functions
-    */
+    /* Activation functions */
     float sigmoid(float x) {
         return 1.0f / (1.0f + std::exp(-x));
     }
@@ -289,7 +287,7 @@ namespace nn {
     /* Loss function */
     float cross_entropy_loss(const Matrix& outputs, const Matrix& targets) {
         float total_loss = 0.0f;
-        float epsilon = 1e-8;  // prevent log(0)
+        float epsilon = 1e-8;
 
         for (size_t k = 0; k < outputs.ncols(); ++k) {
             for (size_t i = 0; i < outputs.nrows(); ++i) {
@@ -301,26 +299,4 @@ namespace nn {
 
         return total_loss;
     }
-
-    /* float cross_entropy_softmax(const std::vector<float>& output, const std::vector<float>& target) {
-        if (output.size() != target.size()) {
-            throw std::invalid_argument("Logits and target size must be the same.");
-        }
-
-        float max_logit = *std::max_element(output.begin(), output.end());
-
-        float log_sum_exp = 0.0f;
-        for (float logit : output) {
-            log_sum_exp += std::exp(logit - max_logit);
-        }
-        log_sum_exp = max_logit + std::log(log_sum_exp);
-
-        float loss = 0.0f;
-        for (size_t i = 0; i < output.size(); ++i) {
-            loss -= target[i] * (output[i] - log_sum_exp);
-        }
-
-        return loss;
-    }
- */
 }
