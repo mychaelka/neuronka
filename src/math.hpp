@@ -4,6 +4,7 @@
 #include <numeric>
 #include <exception>
 #include <algorithm>
+#include <cassert>
 
 #pragma once 
 
@@ -11,25 +12,16 @@ namespace nn {
     /* Linear algebra */ 
     class Matrix {
     
-    private:
-
+    public:
         size_t _nrows;
         size_t _ncols;
         std::vector<float> _data;
-
-        void check_bounds(size_t row, size_t col) const {
-            if (row >= _nrows || col >= _ncols) {
-                throw std::out_of_range("Matrix indices are out of bounds");
-            }
-        }
 
         void consistency_check() {
             if (_nrows * _ncols != _data.size()) {
                 throw std::length_error("Number of elements is not a multiple of rows and cols");
             }
         }
-
-    public:
 
         Matrix(size_t nrows, size_t ncols) : 
             _nrows(nrows), 
@@ -64,12 +56,10 @@ namespace nn {
         const std::vector<float>& data() const { return _data; }
 
         float get(size_t row, size_t col) const {
-            check_bounds(row, col);
             return _data[row * _ncols + col];
         }
 
         void set(size_t row, size_t col, float value) {
-            check_bounds(row, col);
             _data[row * _ncols + col] = value;
         }
 
@@ -86,10 +76,8 @@ namespace nn {
             }
 
             Matrix result(_nrows, _ncols);
-            for (size_t i = 0; i < _nrows; ++i) {
-                for (size_t j = 0; j < _ncols; ++j) {
-                    result.set(i, j, this->get(i, j) + other.get(i, j));
-                }
+            for (size_t i = 0; i < _data.size(); ++i) {
+                result._data[i] = _data[i] + other._data[i];
             }
             return result;
         }
@@ -107,10 +95,8 @@ namespace nn {
                     }
                 }
             } else {
-                for (size_t i = 0; i < _nrows; ++i) {
-                    for (size_t j = 0; j < _ncols; ++j) {
-                        _data[i * _ncols + j] += other.get(i, j);
-                    }
+                for (size_t i = 0; i < _data.size(); ++i) {
+                    _data[i] += other._data[i];
                 }
             }
 
@@ -143,15 +129,16 @@ namespace nn {
                 throw std::length_error("Matrices are not of compatible shape.");
             }
 
-            Matrix result(_nrows, other.ncols());
+            Matrix result(_nrows, other._ncols);
+            #pragma omp parallel for
             for (size_t i = 0; i < _nrows; ++i) {
-                for (size_t j = 0; j < other.ncols(); ++j) {
-                    float current_cell = 0;
+                for (size_t j = 0; j < other._ncols; ++j) {
+                    float current_cell = 0.0f;
                     for (size_t k = 0; k < _ncols; ++k) {
-                        current_cell += this->get(i,k) * other.get(k, j);
+                        current_cell += _data[i * _ncols + k] * other._data[k * other._ncols + j];
                     }
                     
-                    result.set(i, j, current_cell);
+                    result._data[i * other._ncols + j] = current_cell;
                 }
             }
 
@@ -163,7 +150,7 @@ namespace nn {
             Matrix transposed(_ncols, _nrows);
             for (size_t i = 0; i < _nrows; ++i) {
                 for (size_t j = 0; j < _ncols; ++j) {
-                    transposed.set(j, i, this->get(i, j));
+                    transposed._data[j * _nrows + i] = _data[i * _ncols + j];
                 }
             }
             return transposed;
@@ -190,20 +177,16 @@ namespace nn {
 
         void normalize() {
             float sum = 0.0f;
+            float sum_of_squares = 0.0f;
             size_t total_elements = _data.size();
 
             for (const float& value : _data) {
                 sum += value;
+                sum_of_squares += value * value;
             }
 
             float mean = sum / total_elements;
-
-            float variance_sum = 0.0f;
-            for (const float& value : _data) {
-                variance_sum += (value - mean) * (value - mean);
-            }
-
-            float variance = variance_sum / total_elements;
+            float variance = (sum_of_squares / total_elements) - (mean * mean);
             float std_dev = std::sqrt(variance);
 
             if (std_dev == 0.0f) {
@@ -289,12 +272,10 @@ namespace nn {
         float total_loss = 0.0f;
         float epsilon = 1e-8;
 
-        for (size_t k = 0; k < outputs.ncols(); ++k) {
-            for (size_t i = 0; i < outputs.nrows(); ++i) {
-                float p = std::max(epsilon, outputs.get(i, k));
-                float t = targets.get(i, k);
-                total_loss -= t * std::log(p);
-            }
+        for (size_t i = 0; i < outputs.data().size(); ++i) {
+            float p = std::max(epsilon, outputs.data()[i]);
+            float t = targets.data()[i];
+            total_loss -= t * std::log(p);
         }
 
         return total_loss;

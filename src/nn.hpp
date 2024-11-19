@@ -16,6 +16,8 @@ namespace nn {
             size_t end = std::min(start + batch_size, data.ncols());
 
             std::vector<float> batch_elements;
+            batch_elements.reserve(data.nrows() * (end - start));
+            
             for (size_t row = 0; row < data.nrows(); ++row) {
                 for (size_t col = start; col < end; ++col) {
                     batch_elements.push_back(data.get(row, col));
