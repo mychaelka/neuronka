@@ -8,20 +8,6 @@
 #include "nn.hpp"
 
 
-void write_predictions(const std::string& filename, const std::vector<float>& predictions) {
-    std::ofstream file(filename);
-    if (!file.is_open()) {
-        throw std::runtime_error("Unable to open file: " + filename);
-    }
-
-    for (const auto& prediction : predictions) {
-        file << static_cast<int>(prediction) << "\n"; // Ensure output is an integer
-    }
-
-    file.close();
-}
-
-
 void tests() {
 
     // MNIST
@@ -44,21 +30,22 @@ void tests() {
     size_t test_size = 10000;
     size_t input_size = 784;
     size_t num_classes = 10;
-    size_t batch_size = 128;
+    size_t batch_size = 64;
 
-    nn::MLP mnist_network({input_size, 128, 32, num_classes}, batch_size);
+    nn::MLP mnist_network({input_size, 64, 32, num_classes}, batch_size);
 
     train_input_matrix.normalize();
     test_input_matrix.normalize();
 
-    int epochs = 100;
+    int epochs = 50;
     float learning_rate = 0.002f;
     float dropout_rate = 0.3f;
+    float momentum = 0.6f;
 
     auto input_batches = nn::create_batches(train_input_matrix, batch_size);
     auto target_batches = nn::create_batches(train_target_matrix, batch_size);
 
-    nn::train(mnist_network, input_batches, target_batches, epochs, learning_rate, dropout_rate);
+    mnist_network.fit(input_batches, target_batches, epochs, learning_rate, dropout_rate, momentum);
 
     std::vector<float> train_predictions = mnist_network.predict(train_input_matrix);
     std::vector<float> test_predictions = mnist_network.predict(test_input_matrix);
