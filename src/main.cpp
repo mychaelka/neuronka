@@ -31,14 +31,15 @@ void mnist() {
     test_input_matrix.normalize();
 
     int epochs = 50;
-    float learning_rate = 0.002f;
+    float learning_rate = 0.01f;
     float dropout_rate = 0.3f;
-    float momentum = 0.5f;
+    float momentum = 0.9f;
+    float decay = 1e-4f;
 
     auto input_batches = nn::create_batches(train_input_matrix, batch_size);
     auto target_batches = nn::create_batches(train_target_matrix, batch_size);
 
-    mnist_network.fit(input_batches, target_batches, epochs, learning_rate, dropout_rate, momentum);
+    mnist_network.fit(input_batches, target_batches, epochs, learning_rate, dropout_rate, momentum, decay);
 
     std::vector<float> train_predictions = mnist_network.predict(train_input_matrix);
     std::vector<float> test_predictions = mnist_network.predict(test_input_matrix);

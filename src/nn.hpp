@@ -185,7 +185,8 @@ namespace nn {
             }
         }
 
-        void update(float learning_rate, float momentum) {
+        void update(float learning_rate, float momentum, float decay) {
+             _weights_grad += _weights * decay; // multiplied by the learning rate in the next step anyway
              _weights_momentum = (_weights_momentum * momentum) + (_weights_grad * (-learning_rate));
              _weights += _weights_momentum;
 
@@ -280,7 +281,7 @@ namespace nn {
         } 
 
 
-        void backward(const Matrix& target, float learning_rate, float momentum) {
+        void backward(const Matrix& target, float learning_rate, float momentum, float decay) {
             _layers.back().compute_output_deltas(target);
 
             for (int layer_idx = _layers.size() - 2; layer_idx >= 0; --layer_idx) {
@@ -292,11 +293,12 @@ namespace nn {
 
             for (Layer& layer : _layers) {
                 layer.compute_gradients();
-                layer.update(learning_rate, momentum);
+                layer.update(learning_rate, momentum, decay);
             }
         }
 
-        void fit(std::vector<Matrix>& inputs, std::vector<Matrix>& targets, int epochs, float learning_rate, float dropout, float momentum) {
+        void fit(std::vector<Matrix>& inputs, std::vector<Matrix>& targets, int epochs, float learning_rate, 
+                float dropout, float momentum, float decay) {
             for (int epoch = 0; epoch < epochs; ++epoch) {
                 shuffle_batches(inputs, targets);
                 float total_loss = 0.0f;
@@ -305,7 +307,7 @@ namespace nn {
                     const Matrix& output = feed_forward(inputs[batch_idx], dropout);
 
                     total_loss += cross_entropy_loss(output, targets[batch_idx]);
-                    backward(targets[batch_idx], learning_rate, momentum);
+                    backward(targets[batch_idx], learning_rate, momentum, decay);
                 }
 
                 if (epoch % 10 == 0) {
