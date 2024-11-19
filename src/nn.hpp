@@ -6,6 +6,7 @@
 #pragma once
 
 namespace nn {
+
     std::vector<Matrix> create_batches(const Matrix& data, size_t batch_size) {
         std::vector<Matrix> batches;
         size_t num_batches = (data.ncols() + batch_size - 1) / batch_size;
@@ -28,20 +29,22 @@ namespace nn {
     }
 
     void shuffle_batches(std::vector<Matrix>& inputs, std::vector<Matrix>& targets) {
-        std::random_device rd;
-        std::mt19937 generator(rd());
         std::vector<size_t> indices(inputs.size());
         std::iota(indices.begin(), indices.end(), 0);
+        std::random_device rd;
+        std::mt19937 generator(rd());
         std::shuffle(indices.begin(), indices.end(), generator);
 
-        for (size_t i = 0; i < indices.size(); ++i) {
-            if (i != indices[i]) {
-                std::swap(inputs[i], inputs[indices[i]]);
-                std::swap(targets[i], targets[indices[i]]);
-            }
+        std::vector<Matrix> shuffled_inputs;
+        std::vector<Matrix> shuffled_targets;
+        for (size_t idx : indices) {
+            shuffled_inputs.push_back(inputs[idx]);
+            shuffled_targets.push_back(targets[idx]);
         }
+        inputs = std::move(shuffled_inputs);
+        targets = std::move(shuffled_targets);
     }
-    
+
     class Layer {
     
     private:
@@ -119,6 +122,10 @@ namespace nn {
             _output = _weights.dot_matrix(*_input);
             _output += _biases;
             _output.map(_activation_function);
+
+            if (_output_size != _output.nrows()) {
+                throw std::length_error("Output size is not equal to number of neurons in layer");
+            }
         }
 
         void input(const Matrix& input) {
@@ -126,6 +133,7 @@ namespace nn {
         }
 
         void compute_output_deltas(const Matrix& target_batch) {
+            #pragma omp parallel for collapse(2)
             for (size_t k = 0; k < _output.ncols(); ++k) {
                 for (size_t j = 0; j < _output.nrows(); ++j) {
                     float output_val = _output.get(j, k);
@@ -182,7 +190,7 @@ namespace nn {
         }
 
         void update(float learning_rate, float momentum, float decay) {
-             _weights_grad += _weights * decay; // multiplied by the learning rate in the next step anyway
+             _weights_grad += _weights * decay;
              _weights_momentum = (_weights_momentum * momentum) + (_weights_grad * (-learning_rate));
              _weights += _weights_momentum;
 
@@ -194,15 +202,18 @@ namespace nn {
         only for the last layer of network */
         void apply_softmax() {
             for (size_t j = 0; j < _output.ncols(); ++j) {
-                float max_val = *std::max_element(&_output.data()[j * _output.nrows()],
-                                                &_output.data()[(j + 1) * _output.nrows()]);
-                float sum_exp = 0.0f;
-
-                for (size_t i = 0; i < _output.nrows(); ++i) {
-                    _output.set(i, j, std::exp(_output.get(i, j) - max_val));
-                    sum_exp += _output.get(i, j);
+                float max_val = _output.get(0, j);
+                for (size_t i = 1; i < _output.nrows(); ++i) {
+                    max_val = std::max(max_val, _output.get(i, j));
                 }
 
+                float sum_exp = 0.0f;
+                for (size_t i = 0; i < _output.nrows(); ++i) {
+                    float exp_val = std::exp(_output.get(i, j) - max_val);
+                    _output.set(i, j, exp_val);
+                    sum_exp += exp_val;
+                }
+                
                 for (size_t i = 0; i < _output.nrows(); ++i) {
                     _output.set(i, j, _output.get(i, j) / sum_exp);
                 }
@@ -255,7 +266,7 @@ namespace nn {
             
             for (size_t i = 0; i < _layers.size(); ++i) {
                 if (i == _layers.size() - 1) {
-                    _layers[i].set_activation_function(identity, identity_prime);
+                    _layers[i].set_activation_function(identity, identity_prime); // if last layer, set activation to identity and apply softmax after
                 }
 
                 _layers[i].output();
@@ -290,18 +301,16 @@ namespace nn {
             }
         }
 
-        void fit(std::vector<Matrix>& inputs, std::vector<Matrix>& targets, int epochs, float learning_rate, 
-                 float dropout, float momentum, float decay) {
+        void fit(std::vector<Matrix>& inputs, std::vector<Matrix>& targets, int epochs, float learning_rate, float dropout, float momentum, float decay) {
             for (int epoch = 0; epoch < epochs; ++epoch) {
                 shuffle_batches(inputs, targets);
                 float total_loss = 0.0f;
-                float adapt_learning_rate = learning_rate * (1 / (1 + decay * epoch));
 
                 for (size_t batch_idx = 0; batch_idx < inputs.size(); ++batch_idx) {
                     const Matrix& output = feed_forward(inputs[batch_idx], dropout);
 
                     total_loss += cross_entropy_loss(output, targets[batch_idx]);
-                    backward(targets[batch_idx], adapt_learning_rate, momentum, decay);
+                    backward(targets[batch_idx], learning_rate, momentum, decay);
                 }
 
                 if (epoch % 10 == 0) {

@@ -33,7 +33,7 @@ void mnist() {
     int epochs = 50;
     float learning_rate = 0.001f;
     float dropout_rate = 0.3f;
-    float momentum = 0.5f;
+    float momentum = 0.9f;
     float decay = 0.0001f;
 
     auto input_batches = nn::create_batches(train_input_matrix, batch_size);
