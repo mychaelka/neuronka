@@ -46,18 +46,19 @@ void tests() {
     size_t num_classes = 10;
     size_t batch_size = 128;
 
-    nn::MLP mnist_network({input_size, 32, 64, num_classes}, batch_size);
+    nn::MLP mnist_network({input_size, 128, 32, num_classes}, batch_size);
 
     train_input_matrix.normalize();
     test_input_matrix.normalize();
 
     int epochs = 100;
-    float learning_rate = 0.01f;
+    float learning_rate = 0.002f;
+    float dropout_rate = 0.3f;
 
     auto input_batches = nn::create_batches(train_input_matrix, batch_size);
     auto target_batches = nn::create_batches(train_target_matrix, batch_size);
 
-    nn::train(mnist_network, input_batches, target_batches, epochs, learning_rate);
+    nn::train(mnist_network, input_batches, target_batches, epochs, learning_rate, dropout_rate);
 
     std::vector<float> train_predictions = mnist_network.predict(train_input_matrix);
     std::vector<float> test_predictions = mnist_network.predict(test_input_matrix);
