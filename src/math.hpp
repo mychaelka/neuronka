@@ -176,25 +176,8 @@ namespace nn {
         }
 
         void normalize() {
-            float sum = 0.0f;
-            float sum_of_squares = 0.0f;
-            size_t total_elements = _data.size();
-
-            for (const float& value : _data) {
-                sum += value;
-                sum_of_squares += value * value;
-            }
-
-            float mean = sum / total_elements;
-            float variance = (sum_of_squares / total_elements) - (mean * mean);
-            float std_dev = std::sqrt(variance);
-
-            if (std_dev == 0.0f) {
-                std_dev = 1.0f;
-            }
-
             for (float& value : _data) {
-                value = (value - mean) / std_dev;
+                value = value / 255;
             }
         }
     };
