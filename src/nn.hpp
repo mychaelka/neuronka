@@ -17,7 +17,7 @@ namespace nn {
 
             std::vector<float> batch_elements;
             batch_elements.reserve(data.nrows() * (end - start));
-            
+
             for (size_t row = 0; row < data.nrows(); ++row) {
                 for (size_t col = start; col < end; ++col) {
                     batch_elements.push_back(data.get(row, col));
@@ -135,7 +135,6 @@ namespace nn {
         }
 
         void compute_output_deltas(const Matrix& target_batch) {
-            #pragma omp parallel for collapse(2)
             for (size_t k = 0; k < _output.ncols(); ++k) {
                 for (size_t j = 0; j < _output.nrows(); ++j) {
                     float output_val = _output.get(j, k);
@@ -148,7 +147,7 @@ namespace nn {
         }
 
         void compute_hidden_deltas(const Matrix& next_weights, const Matrix& next_deltas) {
-            #pragma omp parallel for collapse(2)
+
             for (size_t k = 0; k < _output.ncols(); ++k) {
                 for (size_t j = 0; j < _output.nrows(); ++j) {
                     float delta_sum = 0.0f;
@@ -167,7 +166,6 @@ namespace nn {
             _weights_grad.zero();
             _bias_grad.zero();
 
-            #pragma omp parallel for collapse(2)
             for (size_t j = 0; j < _weights.nrows(); ++j) {
                 for (size_t i = 0; i < _weights.ncols(); ++i) {
                     float grad_sum = 0.0f;
@@ -307,17 +305,19 @@ namespace nn {
             for (int epoch = 0; epoch < epochs; ++epoch) {
                 shuffle_batches(inputs, targets);
                 float total_loss = 0.0f;
+                size_t samples = 0;
 
                 for (size_t batch_idx = 0; batch_idx < inputs.size(); ++batch_idx) {
                     const Matrix& output = feed_forward(inputs[batch_idx], dropout);
 
                     total_loss += cross_entropy_loss(output, targets[batch_idx]);
+                    samples += inputs[batch_idx].ncols();
                     backward(targets[batch_idx], learning_rate, momentum, decay);
                 }
 
                 if (epoch % 10 == 0) {
                     std::cout << "Epoch " << epoch << "/" << epochs
-                        << ", Loss: " << total_loss << std::endl;
+                        << ", Loss: " << total_loss / static_cast<float>(samples) << std::endl;
                 }
             }
         }

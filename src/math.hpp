@@ -159,8 +159,9 @@ namespace nn {
 
         template <typename Func>
         void map(Func f) {
-            for (float& elem : _data) {
-                elem = f(elem);
+            #pragma clang loop vectorize(assume_safety)
+            for (size_t i = 0; i < _data.size(); ++i) {
+                _data[i] = f(_data[i]);
             }
         }
 
