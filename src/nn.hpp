@@ -169,6 +169,17 @@ namespace nn {
             }
         }
 
+        void apply_dropout(float dropout_rate) {
+            std::random_device rd;
+            std::mt19937 generator(rd());
+            std::bernoulli_distribution dropout(dropout_rate);
+
+            for (float& val : _output.data()) {
+                if (dropout(generator)) {
+                    val = 0.0f;
+                }
+            }
+        }
     };
 
 
@@ -197,10 +208,9 @@ namespace nn {
             }
         }
 
-        //const std::vector<Layer>& layers() const { return _layers; }
         std::vector<Layer>& layers() { return _layers; }
 
-        const Matrix& feed_forward(const Matrix& input) {
+        const Matrix& feed_forward(const Matrix& input, float dropout) {
             _layers[0].input(input);
             
             for (size_t i = 0; i < _layers.size(); ++i) {
@@ -209,6 +219,9 @@ namespace nn {
                 }
 
                 _layers[i].output();
+                if (i > 0 && i < _layers.size() - 1) {
+                    _layers[i].apply_dropout(dropout);
+                }
 
                 if (i == _layers.size() - 1) {
                     _layers[i].apply_softmax();  // automatically apply softmax to last layer (not sure yet if good idea, less general)
@@ -235,15 +248,11 @@ namespace nn {
                 layer.compute_gradients();
                 layer.update(learning_rate);
             }
-
-            /* for (Layer& layer : _layers) {
-                layer.update(learning_rate);
-            } */
         }
 
 
         std::vector<float> predict(const Matrix& input) {
-            const Matrix& output = feed_forward(input);
+            const Matrix& output = feed_forward(input, 0.0f);
             std::vector<float> predictions;
 
             for (size_t i = 0; i < output.ncols(); ++i) {
@@ -260,8 +269,9 @@ namespace nn {
             }
 
             return predictions;
-        } 
+        }
     };
+
 
     std::vector<Matrix> create_batches(const Matrix& data, size_t batch_size) {
         std::vector<Matrix> batches;
@@ -301,13 +311,13 @@ namespace nn {
         targets = std::move(shuffled_targets);
     }
 
-    void train(nn::MLP& network, std::vector<Matrix>& inputs, std::vector<Matrix>& targets, int epochs, float learning_rate) {
+    void train(nn::MLP& network, std::vector<Matrix>& inputs, std::vector<Matrix>& targets, int epochs, float learning_rate, float dropout) {
         for (int epoch = 0; epoch < epochs; ++epoch) {
             shuffle_batches(inputs, targets);
             float total_loss = 0.0f;
 
             for (size_t batch_idx = 0; batch_idx < inputs.size(); ++batch_idx) {
-                const Matrix& output = network.feed_forward(inputs[batch_idx]);
+                const Matrix& output = network.feed_forward(inputs[batch_idx], dropout);
 
                 total_loss += cross_entropy_loss(output, targets[batch_idx]);
                 network.backward(targets[batch_idx], learning_rate);
