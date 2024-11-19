@@ -1,4 +1,4 @@
-CXXFLAGS=-std=c++17 -pedantic -Wall -Wextra -O3 -march=native -funroll-loops $(OTHER_CXXFLAGS)
+CXXFLAGS=-std=c++17 -pedantic -Wall -Wextra -fopenmp -O3 -march=native -funroll-loops $(OTHER_CXXFLAGS)
 BINDIR=bin
 
 .PHONY: bin
