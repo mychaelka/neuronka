@@ -308,6 +308,7 @@ namespace nn {
                 shuffle_batches(inputs, targets);
                 float total_loss = 0.0f;
                 size_t samples = 0;
+                float adapt_learning_rate = learning_rate * (1 / (1 + decay * epoch));
 
                 for (size_t batch_idx = 0; batch_idx < inputs.size(); ++batch_idx) {
                     const Matrix& output = feed_forward(inputs[batch_idx], dropout);
@@ -325,7 +326,7 @@ namespace nn {
         }
 
         std::vector<float> predict(const Matrix& input) {
-            const Matrix& output = feed_forward(input, 0.0f);
+            const Matrix& output = feed_forward(input, 0.0f);  // no dropout
             std::vector<float> predictions;
 
             for (size_t i = 0; i < output.ncols(); ++i) {
