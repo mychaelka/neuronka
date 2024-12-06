@@ -25,21 +25,22 @@ void mnist() {
     size_t num_classes = 10;
     size_t batch_size = 64;
 
-    nn::MLP mnist_network({input_size, 256, 64, num_classes}, batch_size);
+    nn::MLP mnist_network({input_size, 256, num_classes}, batch_size);
 
     train_input_matrix.normalize();
-    test_input_matrix.normalize();
-
-    int epochs = 50;
+    
+    int epochs = 15;
     float learning_rate = 0.003f;
     float dropout_rate = 0.4f;
-    float momentum = 0.1f;
+    float momentum = 0.2f;
     float decay = 0.0001f;
 
     auto input_batches = nn::create_batches(train_input_matrix, batch_size);
     auto target_batches = nn::create_batches(train_target_matrix, batch_size);
 
     mnist_network.fit(input_batches, target_batches, epochs, learning_rate, dropout_rate, momentum, decay);
+
+    test_input_matrix.normalize();
 
     std::vector<float> train_predictions = mnist_network.predict(train_input_matrix);
     std::vector<float> test_predictions = mnist_network.predict(test_input_matrix);

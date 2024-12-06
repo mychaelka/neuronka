@@ -304,24 +304,24 @@ namespace nn {
         }
 
         void fit(std::vector<Matrix>& inputs, std::vector<Matrix>& targets, int epochs, float learning_rate, float dropout, float momentum, float decay) {
-            for (int epoch = 0; epoch < epochs; ++epoch) {
+
+	    for (int epoch = 0; epoch < epochs; ++epoch) {
                 shuffle_batches(inputs, targets);
                 float total_loss = 0.0f;
                 size_t samples = 0;
                 float adapt_learning_rate = learning_rate * (1 / (1 + decay * epoch));
 
                 for (size_t batch_idx = 0; batch_idx < inputs.size(); ++batch_idx) {
-                    const Matrix& output = feed_forward(inputs[batch_idx], dropout);
+		    const Matrix& output = feed_forward(inputs[batch_idx], dropout);
 
                     total_loss += cross_entropy_loss(output, targets[batch_idx]);
                     samples += inputs[batch_idx].ncols();
                     backward(targets[batch_idx], learning_rate, momentum, decay);
                 }
 
-                if (epoch % 10 == 0) {
-                    std::cout << "Epoch " << epoch << "/" << epochs
-                        << ", Loss: " << total_loss / static_cast<float>(samples) << std::endl;
-                }
+
+                std::cout << "Epoch " << epoch + 1 << "/" << epochs
+                    << ", Loss: " << total_loss / static_cast<float>(samples) << std::endl;
             }
         }
 
